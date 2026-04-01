@@ -4,7 +4,7 @@ import { Resend } from "resend";
 
 import { LEAD_PROJECT_CONFIG } from "@/src/lib/backend/project-config";
 import type { LeadRow } from "@/src/lib/supabase/leads-repository";
-import { getResendFromAddress, getServerEnv } from "@/src/lib/utils/env";
+import { getResendFromAddress, getResendToAddress, getServerEnv } from "@/src/lib/utils/env";
 import { compactJoin, formatCurrency, formatDeliveryDateLabel } from "@/src/lib/utils/format";
 import type { SyncStatus } from "@/src/types/lead";
 
@@ -63,10 +63,11 @@ export async function sendAdminLeadEmail(lead: LeadRow): Promise<{
     };
   }
 
+  const recipient = getResendToAddress() || LEAD_PROJECT_CONFIG.adminNotificationEmail;
   const resend = new Resend(env.RESEND_API_KEY);
   await resend.emails.send({
     from,
-    to: [LEAD_PROJECT_CONFIG.adminNotificationEmail],
+    to: [recipient],
     replyTo: lead.customer_email,
     subject: `[${LEAD_PROJECT_CONFIG.senderBranding}] New ${LEAD_PROJECT_CONFIG.projectSlug} lead ${lead.order_number}`,
     html: buildHtml(lead)

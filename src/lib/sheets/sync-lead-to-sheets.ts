@@ -1,7 +1,7 @@
 import "server-only";
 
 import { LEAD_PROJECT_CONFIG } from "@/src/lib/backend/project-config";
-import { getServerEnv } from "@/src/lib/utils/env";
+import { getGoogleSheetsUrl, getServerEnv } from "@/src/lib/utils/env";
 import type { LeadRow } from "@/src/lib/supabase/leads-repository";
 import type { SyncStatus } from "@/src/types/lead";
 
@@ -11,14 +11,16 @@ export async function syncLeadToSheets(lead: LeadRow): Promise<{
 }> {
   const env = getServerEnv();
 
-  if (!env.GOOGLE_SHEETS_WEBHOOK_URL) {
+  const sheetsUrl = getGoogleSheetsUrl();
+
+  if (!sheetsUrl) {
     return {
       status: "skipped",
-      message: "GOOGLE_SHEETS_WEBHOOK_URL is not configured."
+      message: "GOOGLE_SHEETS_APPS_SCRIPT_URL is not configured."
     };
   }
 
-  const response = await fetch(env.GOOGLE_SHEETS_WEBHOOK_URL, {
+  const response = await fetch(sheetsUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

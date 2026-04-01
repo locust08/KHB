@@ -6,11 +6,15 @@ import ScrollRevealObserver from "./components/site/ScrollRevealObserver";
 import AttributionTracker from "./components/site/AttributionTracker";
 import TrackingScripts from "./components/site/TrackingScripts";
 import { CartProvider } from "./components/site/CartProvider";
+import { getPublicSiteUrl } from "@/src/lib/utils/env";
+
+const siteUrl = getPublicSiteUrl();
 
 export const metadata = {
   title: "Peach Strudel | Kenny Hills Bakers",
   description:
-    "A warm, editorial product microsite for Kenny Hills Bakers Peach Strudel, with size guides, storage tips, and a full order flow."
+    "A warm, editorial product microsite for Kenny Hills Bakers Peach Strudel, with size guides, storage tips, and a full order flow.",
+  metadataBase: siteUrl ? new URL(siteUrl) : undefined
 };
 
 export default function RootLayout({ children }) {
