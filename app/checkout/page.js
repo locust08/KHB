@@ -11,6 +11,7 @@ import {
   stores
 } from "../components/site/data";
 import { useCart } from "../components/site/CartProvider";
+import { getAttributionSnapshot } from "@/src/lib/tracking/attribution";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -34,6 +35,7 @@ function CheckoutContent() {
   const [selectedBank, setSelectedBank] = useState(malaysiaBanks[0]);
   const [selectedEwallet, setSelectedEwallet] = useState(ewalletOptions[0]);
   const [note, setNote] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "", address: "", city: "", postalCode: "", state: "", deliveryDate: "", deliveryTime: "", instructions: "", cardNumber: "", cardName: "", expiryDate: "", cvv: ""
   });
@@ -69,6 +71,12 @@ function CheckoutContent() {
   const tax = subtotal * 0.06;
   const total = subtotal + deliveryFee + tax;
   const totalQuantity = checkoutItems.reduce((count, item) => count + item.quantity, 0);
+  const selectedPaymentLabel =
+    paymentMethod === "card"
+      ? "Credit/Debit Card"
+      : paymentMethod === "online"
+        ? selectedBank
+        : selectedEwallet;
 
   function updateField(field, value) {
     setFormData((current) => ({ ...current, [field]: value }));
@@ -83,7 +91,7 @@ function CheckoutContent() {
     setQuantity(Math.max(1, nextQuantity));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
       setNote("Please complete your personal information before placing the order.");
@@ -98,42 +106,84 @@ function CheckoutContent() {
       return;
     }
 
-    const orderNumber = `KHB${Date.now().toString().slice(-6)}`;
-    const itemsSummary = checkoutItems
-      .map((item) => `${item.size.display} x${item.quantity}`)
-      .join(", ");
-    const params = new URLSearchParams({
-      order: orderNumber,
-      total: total.toFixed(2),
-      email: formData.email,
-      date: formData.deliveryDate,
-      deliveryTime: formData.deliveryTime,
-      method: deliveryMethod,
-      pickupStore: deliveryMethod === "pickup" ? selectedPickupStore.name : "",
-      sizeKey: checkoutItems[0]?.size.key ?? selectedSize.key,
-      quantity: String(totalQuantity),
-      itemsSummary,
-      candles: includeCandles ? "yes" : "no",
-      candleQty: String(includeCandles ? candleQuantity : 0),
-      instructions: formData.instructions,
-      address: deliveryMethod === "delivery" ? formData.address : "",
-      city: deliveryMethod === "delivery" ? formData.city : "",
-      postalCode: deliveryMethod === "delivery" ? formData.postalCode : "",
-      state: deliveryMethod === "delivery" ? formData.state : "",
-      payment: paymentMethod,
-      paymentLabel:
-        paymentMethod === "card"
-          ? "Credit/Debit Card"
-          : paymentMethod === "online"
-            ? selectedBank
-            : selectedEwallet
-    });
+    setIsSubmitting(true);
+    setNote("");
 
-    if (isCartCheckout) {
-      removeItems(selectedCartIds);
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          customer: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone
+          },
+          fulfillment: {
+            method: deliveryMethod,
+            address: deliveryMethod === "delivery" ? formData.address : "",
+            city: deliveryMethod === "delivery" ? formData.city : "",
+            postalCode: deliveryMethod === "delivery" ? formData.postalCode : "",
+            state: deliveryMethod === "delivery" ? formData.state : "",
+            pickupStoreId: deliveryMethod === "pickup" ? selectedStoreId : "",
+            pickupStoreName: deliveryMethod === "pickup" ? selectedPickupStore.name : ""
+          },
+          schedule: {
+            deliveryDate: formData.deliveryDate,
+            deliveryTime: formData.deliveryTime,
+            instructions: formData.instructions
+          },
+          payment: {
+            method: paymentMethod,
+            label: selectedPaymentLabel
+          },
+          addOns: {
+            includeCandles,
+            candleQuantity: includeCandles ? candleQuantity : 0
+          },
+          order: {
+            items: checkoutItems.map((item) => ({
+              id: item.id,
+              sizeKey: item.size.key,
+              sizeLabel: item.size.display,
+              dimensions: item.size.dimensions,
+              image: item.size.image,
+              unitPrice: item.size.price,
+              quantity: item.quantity,
+              lineTotal: item.size.price * item.quantity
+            })),
+            subtotal,
+            deliveryFee,
+            tax,
+            total,
+            currency: "MYR"
+          },
+          attribution: getAttributionSnapshot(),
+          context: {
+            pageUrl: typeof window !== "undefined" ? window.location.href : ""
+          }
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || "We could not save your order right now.");
+      }
+
+      if (isCartCheckout) {
+        removeItems(selectedCartIds);
+      }
+
+      router.push(result.confirmationUrl);
+    } catch (error) {
+      setNote(error instanceof Error ? error.message : "We could not save your order right now.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    router.push(`/thank-you?${params.toString()}`);
   }
 
   if (isCartCheckout && !isHydrated) {
@@ -412,7 +462,13 @@ function CheckoutContent() {
                 <div className="summary-row is-total"><span>Total</span><strong>{formatCurrency(total)}</strong></div>
                 <small>Secure checkout. Final payment method is confirmed on the next step.</small>
               </div>
-              <button className="button button-primary checkout-submit-button" type="submit">Complete Order</button>
+              <button
+                className="button button-primary checkout-submit-button"
+                disabled={isSubmitting}
+                type="submit"
+              >
+                {isSubmitting ? "Saving Order..." : "Complete Order"}
+              </button>
               {note ? <div className="order-note">{note}</div> : null}
               <p className="checkout-terms-note">
                 By placing your order, you agree to our Terms & Conditions.

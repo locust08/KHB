@@ -1,0 +1,45 @@
+create extension if not exists pgcrypto;
+
+create table if not exists public."leads_KHB" (
+  id uuid primary key default gen_random_uuid(),
+  lead_id text not null unique,
+  confirmation_token text not null unique,
+  order_number text not null unique,
+  customer_name text not null,
+  customer_first_name text not null,
+  customer_last_name text not null,
+  customer_email text not null,
+  customer_phone text not null,
+  delivery_method text not null,
+  delivery_date date not null,
+  delivery_time text not null default '',
+  delivery_address text not null default '',
+  delivery_city text not null default '',
+  delivery_postal_code text not null default '',
+  delivery_state text not null default '',
+  pickup_store_id text not null default '',
+  pickup_store_name text not null default '',
+  payment_method text not null,
+  payment_label text not null,
+  include_candles boolean not null default false,
+  candle_quantity integer not null default 0,
+  special_instructions text not null default '',
+  subtotal numeric(12, 2) not null default 0,
+  delivery_fee numeric(12, 2) not null default 0,
+  tax numeric(12, 2) not null default 0,
+  total numeric(12, 2) not null default 0,
+  currency text not null default 'MYR',
+  items jsonb not null default '[]'::jsonb,
+  attribution jsonb,
+  tracking_context jsonb,
+  whatsapp_url text not null default '',
+  sheet_sync_status text not null default 'pending',
+  sheet_sync_message text not null default '',
+  admin_email_status text not null default 'pending',
+  admin_email_message text not null default '',
+  raw_payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists leads_khb_created_at_idx on public."leads_KHB" (created_at desc);
+create index if not exists leads_khb_email_idx on public."leads_KHB" (customer_email);

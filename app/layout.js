@@ -3,6 +3,8 @@ import Navigation from "./components/site/Navigation";
 import Footer from "./components/site/Footer";
 import SupportChat from "./components/site/SupportChat";
 import ScrollRevealObserver from "./components/site/ScrollRevealObserver";
+import AttributionTracker from "./components/site/AttributionTracker";
+import TrackingScripts from "./components/site/TrackingScripts";
 import { CartProvider } from "./components/site/CartProvider";
 
 export const metadata = {
@@ -15,6 +17,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
+        <TrackingScripts />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -24,6 +27,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <CartProvider>
+          <AttributionTracker />
           <ScrollRevealObserver />
           <div className="site-shell">
             <Navigation />
