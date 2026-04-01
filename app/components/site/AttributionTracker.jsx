@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
-import { persistAttributionSnapshot } from "@/src/lib/tracking/attribution";
+import { buildAttributionPayload } from "@/src/lib/tracking/attribution";
 
 export default function AttributionTracker() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   useEffect(() => {
-    persistAttributionSnapshot();
-  }, []);
+    const query = searchParams.toString();
+    const nextUrl = `${pathname}${query ? `?${query}` : ""}`;
+    buildAttributionPayload(nextUrl);
+  }, [pathname, searchParams]);
 
   return null;
 }

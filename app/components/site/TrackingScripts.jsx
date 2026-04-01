@@ -8,7 +8,7 @@ export default function TrackingScripts() {
   return (
     <>
       {gtmContainerId ? (
-        <Script id="khb-gtm" strategy="afterInteractive">
+        <Script id="khb-gtm" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
@@ -30,7 +30,7 @@ export default function TrackingScripts() {
               function gtag(){dataLayer.push(arguments);}
               window.gtag = gtag;
               gtag('js', new Date());
-              gtag('config', '${ga4MeasurementId}');
+              gtag('config', '${ga4MeasurementId}', { send_page_view: false });
             `}
           </Script>
         </>

@@ -54,3 +54,13 @@ Server-only values never reach client code and should only be read from server c
 - `NEXT_PUBLIC_GTM_ID` is the browser-safe GTM container ID; `PUBLIC_GTM_CONTAINER_ID` and `GTM_CONTAINER_ID` are supported aliases.
 - `RESEND_FROM_EMAIL_DEV` and `RESEND_TO_EMAIL_DEV` are useful for non-production testing.
 - `RESEND_FROM_EMAIL_PROD` and `RESEND_TO_EMAIL_PROD` should be used in production.
+- Attribution is persisted to `sessionStorage` and a first-party cookie, with `trackingSessionId`, landing page fields, page history, and captured query params preserved across internal navigation.
+- Success events are only emitted after the backend lead API responds, and the client dedupes them in session storage.
+
+## Manual Setup Still Needed
+
+- Create the GTM container named `KHB` under GTM account `6346744109`.
+- Create the GA4 property named `K` under GA4 account `389036374`.
+- Copy the resulting container ID into `NEXT_PUBLIC_GTM_ID`.
+- Copy the resulting measurement ID into `PUBLIC_GA4_MEASUREMENT_ID` or `GA4_STREAM_ID` if you prefer the legacy alias.
+- Keep Supabase row-level security and the `leads_KHB` table aligned with the SQL in [`scripts/create-leads-table.sql`](../scripts/create-leads-table.sql).

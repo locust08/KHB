@@ -18,6 +18,16 @@ export interface LeadAttributionSnapshot {
   landingPage: string;
   lastPage: string;
   referrer: string;
+  trackingSessionId?: string;
+  landingPageUrl?: string;
+  landingPagePath?: string;
+  pageUrl?: string;
+  pagePath?: string;
+  pageHistory?: Array<{
+    pageUrl: string;
+    pagePath: string;
+    timestamp: string;
+  }>;
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
@@ -27,6 +37,7 @@ export interface LeadAttributionSnapshot {
   fbclid?: string;
   ttclid?: string;
   msclkid?: string;
+  clickId?: string;
   gbraid?: string;
   wbraid?: string;
   firstCapturedAt: string;

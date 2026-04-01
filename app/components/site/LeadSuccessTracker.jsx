@@ -10,11 +10,6 @@ export default function LeadSuccessTracker({ lead }) {
       return;
     }
 
-    const storageKey = `khb-lead-success:${lead.leadId}`;
-    if (window.sessionStorage.getItem(storageKey)) {
-      return;
-    }
-
     trackLeadSuccess({
       leadId: lead.leadId,
       orderNumber: lead.orderNumber,
@@ -23,8 +18,6 @@ export default function LeadSuccessTracker({ lead }) {
       deliveryMethod: lead.deliveryMethod,
       itemCount: lead.items.length
     });
-
-    window.sessionStorage.setItem(storageKey, "1");
   }, [lead]);
 
   return null;

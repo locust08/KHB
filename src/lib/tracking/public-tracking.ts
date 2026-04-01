@@ -16,12 +16,18 @@ declare global {
 
 export function trackLeadSuccess(payload: SuccessTrackingPayload) {
   if (typeof window === "undefined") {
-    return;
+    return false;
+  }
+
+  const dedupeKey = `khb-success:${payload.leadId}:${payload.orderNumber}`;
+  if (window.sessionStorage.getItem(dedupeKey) === "1") {
+    return false;
   }
 
   window.dataLayer = window.dataLayer ?? [];
   window.dataLayer.push({
     event: "lead_submit_success",
+    event_id: dedupeKey,
     lead_id: payload.leadId,
     order_number: payload.orderNumber,
     value: payload.value,
@@ -35,9 +41,13 @@ export function trackLeadSuccess(payload: SuccessTrackingPayload) {
       currency: payload.currency,
       value: payload.value,
       transaction_id: payload.orderNumber,
+      event_id: dedupeKey,
       lead_id: payload.leadId,
       delivery_method: payload.deliveryMethod,
       item_count: payload.itemCount
     });
   }
+
+  window.sessionStorage.setItem(dedupeKey, "1");
+  return true;
 }

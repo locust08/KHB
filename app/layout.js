@@ -5,7 +5,9 @@ import SupportChat from "./components/site/SupportChat";
 import ScrollRevealObserver from "./components/site/ScrollRevealObserver";
 import AttributionTracker from "./components/site/AttributionTracker";
 import TrackingScripts from "./components/site/TrackingScripts";
+import TrackingNoscript from "./components/site/TrackingNoscript";
 import { CartProvider } from "./components/site/CartProvider";
+import { Suspense } from "react";
 import { getPublicSiteUrl } from "@/src/lib/utils/env";
 
 const siteUrl = getPublicSiteUrl();
@@ -30,8 +32,11 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        <TrackingNoscript />
         <CartProvider>
-          <AttributionTracker />
+          <Suspense fallback={null}>
+            <AttributionTracker />
+          </Suspense>
           <ScrollRevealObserver />
           <div className="site-shell">
             <Navigation />
