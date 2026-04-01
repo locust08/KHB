@@ -60,7 +60,7 @@ Server-only values never reach client code and should only be read from server c
 ## Manual Setup Still Needed
 
 - GTM container `KHB` has already been created under GTM account `6346744109`.
-- GA4 property `K` has already been created under GA4 account `389036374`.
+- GA4 property `KHB` has already been created under GA4 account `389036374`.
 - The live GTM container ID is `GTM-MP76J52T`.
 - The live GA4 measurement ID is `G-9HW75Y9W34`.
 - You can still override either ID with `NEXT_PUBLIC_GTM_ID` or `PUBLIC_GA4_MEASUREMENT_ID` later if you want a different deployment target.
