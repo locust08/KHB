@@ -59,8 +59,9 @@ Server-only values never reach client code and should only be read from server c
 
 ## Manual Setup Still Needed
 
-- Create the GTM container named `KHB` under GTM account `6346744109`.
-- Create the GA4 property named `K` under GA4 account `389036374`.
-- Copy the resulting container ID into `NEXT_PUBLIC_GTM_ID`.
-- Copy the resulting measurement ID into `PUBLIC_GA4_MEASUREMENT_ID` or `GA4_STREAM_ID` if you prefer the legacy alias.
+- GTM container `KHB` has already been created under GTM account `6346744109`.
+- GA4 property `K` has already been created under GA4 account `389036374`.
+- The live GTM container ID is `GTM-MP76J52T`.
+- The live GA4 measurement ID is `G-9HW75Y9W34`.
+- You can still override either ID with `NEXT_PUBLIC_GTM_ID` or `PUBLIC_GA4_MEASUREMENT_ID` later if you want a different deployment target.
 - Keep Supabase row-level security and the `leads_KHB` table aligned with the SQL in [`scripts/create-leads-table.sql`](../scripts/create-leads-table.sql).

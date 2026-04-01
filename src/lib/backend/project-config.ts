@@ -1,6 +1,8 @@
 export const LEAD_PROJECT_CONFIG = {
   projectName: "KHB",
   projectSlug: "KHB",
+  gtmContainerId: "GTM-MP76J52T",
+  ga4MeasurementId: "G-9HW75Y9W34",
   supabaseTableName: "leads_KHB",
   googleSheetTabName: "leads_KHB",
   appsScriptTargetTabName: "leads_KHB",

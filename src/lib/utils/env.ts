@@ -2,6 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 
+import { LEAD_PROJECT_CONFIG } from "@/src/lib/backend/project-config";
+
 const serverEnvSchema = z.object({
   SITE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
@@ -44,9 +46,11 @@ export function getPublicRuntimeConfig() {
       process.env.NEXT_PUBLIC_GTM_ID ??
       process.env.PUBLIC_GTM_CONTAINER_ID ??
       process.env.GTM_CONTAINER_ID ??
-      "",
+      LEAD_PROJECT_CONFIG.gtmContainerId,
     ga4MeasurementId:
-      process.env.PUBLIC_GA4_MEASUREMENT_ID ?? process.env.GA4_STREAM_ID ?? "",
+      process.env.PUBLIC_GA4_MEASUREMENT_ID ??
+      process.env.GA4_STREAM_ID ??
+      LEAD_PROJECT_CONFIG.ga4MeasurementId,
     whatsappPhoneNumber:
       process.env.NEXT_PUBLIC_WHATSAPP_PHONE_NUMBER ??
       process.env.WHATSAPP_PHONE_NUMBER ??
