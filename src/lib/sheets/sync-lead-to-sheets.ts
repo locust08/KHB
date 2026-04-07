@@ -91,7 +91,6 @@ export async function syncLeadToSheets(lead: LeadRow): Promise<{
         project: LEAD_PROJECT_CONFIG.projectSlug,
         leadId: lead.lead_id,
         lead_id: lead.lead_id,
-        id: lead.id,
         name: lead.name,
         phone: lead.phone,
         email: lead.email,
