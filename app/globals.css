@@ -5241,10 +5241,19 @@ button,
   background: rgba(255, 245, 238, .85);
 }
 .thank-you-meta-copy {
+  width: 100%;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
 }
 .thank-you-meta-copy .copy-contact-link {
+  flex: 0 1 auto;
   justify-content: flex-end;
+  text-align: right;
+}
+.thank-you-meta-copy .copy-contact-button {
+  flex: 0 0 auto;
 }
 .contact-copy-inline {
   margin-top: 10px;
