@@ -256,7 +256,7 @@ function CheckoutContent() {
         removeItems(selectedCartIds);
       }
 
-      const nextUrl = result.whatsappUrl || result.confirmationUrl;
+      const nextUrl = result.confirmationUrl || result.whatsappUrl;
 
       if (nextUrl) {
         await new Promise((resolve) => setTimeout(resolve, 150));

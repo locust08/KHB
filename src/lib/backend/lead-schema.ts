@@ -35,7 +35,7 @@ const attributionSchema = z
 const genericLeadSubmissionSchema = z
   .object({
     name: z.string().trim().min(1).max(240),
-    phone: z.string().trim().min(8).max(40),
+    phone: z.string().trim().max(40).default(""),
     email: z.string().trim().email().max(200),
     message: z.string().trim().max(4000).default(""),
     formName: z.string().trim().min(1).max(120),
@@ -80,6 +80,14 @@ const genericLeadSubmissionSchema = z
         code: z.ZodIssueCode.custom,
         path: ["selectedProductNames"],
         message: "selectedProductIds and selectedProductNames must contain the same number of items."
+      });
+    }
+
+    if (value.formName !== "contact" && value.phone.trim().length < 8) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["phone"],
+        message: "Phone number is required."
       });
     }
   });

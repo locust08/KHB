@@ -2,6 +2,7 @@ import "server-only";
 
 import { parseLeadSubmission } from "@/src/lib/backend/lead-schema";
 import { LEAD_PROJECT_CONFIG } from "@/src/lib/backend/project-config";
+import { sendAdminLeadEmail } from "@/src/lib/email/send-admin-lead-email";
 import { syncLeadToSheets } from "@/src/lib/sheets/sync-lead-to-sheets";
 import {
   getLeadConfirmationByToken,
@@ -246,14 +247,45 @@ async function runSecondarySyncs(lead: LeadRow) {
     warnings.push(`Sheets sync ${sheetsResult.status}: ${sheetsResult.message}`);
   }
 
-  if (sheetsResult.emailStatus === "failed") {
-    warnings.push(`Admin email ${sheetsResult.emailStatus}: ${sheetsResult.emailMessage}`);
-  } else if (sheetsResult.emailStatus === "skipped") {
-    warnings.push(`Admin email skipped: ${sheetsResult.emailMessage}`);
+  let emailStatus = sheetsResult.emailStatus;
+  let emailMessage = sheetsResult.emailMessage;
+  let emailConfigured = sheetsResult.configured;
+  let emailSent = sheetsResult.emailSent;
+
+  if (emailStatus !== "success") {
+    const resendResult = await sendAdminLeadEmail(lead).catch((error: unknown) => ({
+      status: "failed" as const,
+      message: sanitizeErrorMessage(error),
+      configured: false
+    }));
+
+    if (resendResult.status === "success") {
+      emailStatus = "success";
+      emailMessage =
+        sheetsResult.emailStatus === "success"
+          ? sheetsResult.emailMessage
+          : `Resend fallback: ${resendResult.message}`;
+      emailConfigured = resendResult.configured || emailConfigured;
+      emailSent = true;
+    } else {
+      emailStatus = resendResult.status === "skipped" ? sheetsResult.emailStatus : resendResult.status;
+      emailMessage =
+        resendResult.status === "skipped" && sheetsResult.emailMessage
+          ? sheetsResult.emailMessage
+          : resendResult.message;
+      emailConfigured = resendResult.configured || emailConfigured;
+      emailSent = false;
+    }
+  }
+
+  if (emailStatus === "failed") {
+    warnings.push(`Admin email failed: ${emailMessage}`);
+  } else if (emailStatus === "skipped") {
+    warnings.push(`Admin email skipped: ${emailMessage}`);
   }
 
   const nextSheetSynced = sheetsResult.status === "success";
-  const nextEmailSent = sheetsResult.emailSent;
+  const nextEmailSent = emailSent;
   const nextWhatsappRedirected = Boolean(whatsappUrl);
 
   try {
@@ -263,8 +295,8 @@ async function runSecondarySyncs(lead: LeadRow) {
       whatsapp_redirected: nextWhatsappRedirected,
       sheet_sync_status: sheetsResult.status,
       sheet_sync_message: sheetsResult.message,
-      admin_email_status: sheetsResult.emailStatus,
-      admin_email_message: sheetsResult.emailMessage,
+      admin_email_status: emailStatus,
+      admin_email_message: emailMessage,
       whatsapp_url: whatsappUrl
     });
   } catch (error) {
@@ -276,11 +308,11 @@ async function runSecondarySyncs(lead: LeadRow) {
     whatsappMessage,
     whatsappUrl,
     warnings,
-    emailConfigured: sheetsResult.configured,
+    emailConfigured,
     sheetSynced: nextSheetSynced,
     emailSent: nextEmailSent,
     whatsappRedirectReady: nextWhatsappRedirected,
-    emailStatus: sheetsResult.emailStatus
+    emailStatus
   };
 }
 
@@ -315,6 +347,8 @@ export async function submitLead(rawInput: unknown): Promise<LeadPipelineRespons
 
 export async function getLeadConfirmation(token: string): Promise<LeadConfirmation> {
   const lead = await getLeadConfirmationByToken(token);
+  const resolvedWhatsappUrl =
+    String(lead.whatsapp_url ?? "") || buildWhatsAppUrl(lead as unknown as LeadRow);
 
   return {
     leadId: String(lead.lead_id),
@@ -349,7 +383,7 @@ export async function getLeadConfirmation(token: string): Promise<LeadConfirmati
     utmContent: String(lead.utm_content ?? ""),
     utmTerm: String(lead.utm_term ?? ""),
     clickId: String(lead.click_id ?? ""),
-    whatsappUrl: String(lead.whatsapp_url ?? ""),
+    whatsappUrl: resolvedWhatsappUrl,
     createdAt: String(lead.created_at)
   };
 }
