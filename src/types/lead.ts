@@ -45,52 +45,92 @@ export interface LeadAttributionSnapshot {
 }
 
 export interface LeadSubmissionInput {
-  customer: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-  };
-  fulfillment: {
-    method: DeliveryMethod;
-    address?: string;
-    city?: string;
-    postalCode?: string;
-    state?: string;
-    pickupStoreId?: string;
-    pickupStoreName?: string;
-  };
-  schedule: {
-    deliveryDate: string;
-    deliveryTime?: string;
-    instructions?: string;
-  };
-  payment: {
-    method: PaymentMethod;
-    label: string;
-  };
-  addOns: {
-    includeCandles: boolean;
-    candleQuantity: number;
-  };
-  order: {
-    items: CheckoutLineItem[];
-    subtotal: number;
-    deliveryFee: number;
-    tax: number;
-    total: number;
-    currency: string;
-  };
+  name: string;
+  phone: string;
+  email: string;
+  message: string;
+  formName: string;
+  enquiryCategory: string;
+  selectedService: string;
+  selectedProductIds: string[];
+  selectedProductNames: string[];
+  sheetSynced?: boolean;
+  emailSent?: boolean;
+  whatsappRedirected?: boolean;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
+  gclid?: string;
+  fbclid?: string;
+  msclkid?: string;
+  ttclid?: string;
+  clickId?: string;
+  trackingSessionId?: string;
+  landingPageUrl?: string;
+  landingPagePath?: string;
+  pageUrl?: string;
+  pagePath?: string;
+  pageHistory?: Array<{
+    pageUrl: string;
+    pagePath: string;
+    timestamp: string;
+  }>;
+  referrer?: string;
+  userAgent?: string;
   attribution?: LeadAttributionSnapshot | null;
   context?: {
     pageUrl?: string;
     userAgent?: string;
+    referrer?: string;
+  };
+  legacy?: {
+    customer: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+    };
+    fulfillment: {
+      method: DeliveryMethod;
+      address?: string;
+      city?: string;
+      postalCode?: string;
+      state?: string;
+      pickupStoreId?: string;
+      pickupStoreName?: string;
+    };
+    schedule: {
+      deliveryDate: string;
+      deliveryTime?: string;
+      instructions?: string;
+    };
+    payment: {
+      method: PaymentMethod;
+      label: string;
+    };
+    addOns: {
+      includeCandles: boolean;
+      candleQuantity: number;
+    };
+    order: {
+      items: CheckoutLineItem[];
+      subtotal: number;
+      deliveryFee: number;
+      tax: number;
+      total: number;
+      currency: string;
+    };
   };
 }
 
 export interface LeadConfirmation {
   leadId: string;
   orderNumber: string;
+  formName?: string;
+  enquiryCategory?: string;
+  selectedService?: string;
   customerName: string;
   email: string;
   phone: string;
@@ -107,15 +147,35 @@ export interface LeadConfirmation {
   candleQuantity: number;
   specialInstructions: string;
   items: CheckoutLineItem[];
+  trackingSessionId?: string;
+  landingPagePath?: string;
+  pagePath?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
+  clickId?: string;
   whatsappUrl: string;
   createdAt: string;
 }
 
 export interface LeadPipelineResponse {
   success: true;
+  leadSaved: boolean;
   leadId: string;
+  orderNumber: string;
+  emailConfigured: boolean;
+  emailSent: boolean;
+  sheetSynced: boolean;
+  whatsappRedirectReady: boolean;
+  trackingReady: boolean;
+  processingComplete: boolean;
+  warnings: string[];
+  errors: string[];
   confirmationToken: string;
   confirmationUrl: string;
+  whatsappMessage: string;
   whatsappUrl: string;
   syncStatus: {
     sheets: SyncStatus;

@@ -1,14 +1,18 @@
 "use client";
 
 import { MessageCircle, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import CopyableContact from "../components/site/CopyableContact";
 import SupportChat from "../components/site/SupportChat";
 import { stores } from "../components/site/data";
+import { buildAttributionPayload } from "@/src/lib/tracking/attribution";
 
 export default function ContactPage() {
+  const router = useRouter();
   const [selectedStore, setSelectedStore] = useState(stores[0]);
   const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,14 +29,108 @@ export default function ContactPage() {
     setFormData((current) => ({ ...current, [field]: value }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     if (!formData.name || !formData.email || !formData.message) {
       setStatus("Please fill in all required fields.");
       return;
     }
-    setStatus("Message sent! We'll get back to you within 24 hours.");
-    setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+
+    setIsSubmitting(true);
+    setStatus("");
+
+    const trackingState = buildAttributionPayload();
+    const message = [formData.subject ? `Subject: ${formData.subject}` : "", formData.message]
+      .filter(Boolean)
+      .join("\n\n");
+
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          message,
+          formName: "contact",
+          enquiryCategory: "contact",
+          selectedService: formData.subject || "General Enquiry",
+          selectedProductIds: [],
+          selectedProductNames: [],
+          trackingSessionId: trackingState?.trackingSessionId ?? trackingState?.sessionId ?? "",
+          landingPageUrl: trackingState?.landingPageUrl ?? trackingState?.landingPage ?? "",
+          landingPagePath: trackingState?.landingPagePath ?? "",
+          pageUrl: trackingState?.pageUrl ?? "",
+          pagePath: trackingState?.pagePath ?? trackingState?.lastPage ?? "",
+          pageHistory: trackingState?.pageHistory ?? [],
+          referrer: trackingState?.referrer ?? "",
+          userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "",
+          utmSource: trackingState?.utmSource ?? "",
+          utmMedium: trackingState?.utmMedium ?? "",
+          utmCampaign: trackingState?.utmCampaign ?? "",
+          utmContent: trackingState?.utmContent ?? "",
+          utmTerm: trackingState?.utmTerm ?? "",
+          gclid: trackingState?.gclid ?? "",
+          fbclid: trackingState?.fbclid ?? "",
+          msclkid: trackingState?.msclkid ?? "",
+          ttclid: trackingState?.ttclid ?? "",
+          clickId: trackingState?.clickId ?? "",
+          attribution: trackingState
+            ? {
+                sessionId: trackingState.sessionId ?? trackingState.trackingSessionId ?? "",
+                landingPage: trackingState.landingPage ?? trackingState.landingPageUrl ?? "",
+                lastPage: trackingState.lastPage ?? trackingState.pagePath ?? "",
+                referrer: trackingState.referrer ?? "",
+                utmSource: trackingState.utmSource ?? "",
+                utmMedium: trackingState.utmMedium ?? "",
+                utmCampaign: trackingState.utmCampaign ?? "",
+                utmTerm: trackingState.utmTerm ?? "",
+                utmContent: trackingState.utmContent ?? "",
+                gclid: trackingState.gclid ?? "",
+                fbclid: trackingState.fbclid ?? "",
+                msclkid: trackingState.msclkid ?? "",
+                ttclid: trackingState.ttclid ?? "",
+                clickId: trackingState.clickId ?? "",
+                gbraid: trackingState.gbraid ?? "",
+                wbraid: trackingState.wbraid ?? "",
+                firstCapturedAt: trackingState.firstCapturedAt ?? "",
+                lastCapturedAt: trackingState.lastCapturedAt ?? ""
+              }
+            : null,
+          context: {
+            pageUrl: typeof window !== "undefined" ? window.location.href : "",
+            userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "",
+            referrer: typeof document !== "undefined" ? document.referrer : ""
+          }
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || "We could not send your message right now.");
+      }
+
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+      setStatus("Message sent! Redirecting you to the confirmation page now.");
+
+      const nextUrl = result.confirmationUrl || result.whatsappUrl;
+      if (nextUrl) {
+        router.push(nextUrl);
+        return;
+      }
+
+      setStatus("Message sent! We'll get back to you within 24 hours.");
+    } catch (submitError) {
+      setStatus(
+        submitError instanceof Error ? submitError.message : "We could not send your message right now."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -123,9 +221,9 @@ export default function ContactPage() {
                   value={formData.message}
                 />
               </label>
-              <button className="button button-icon contact-button-dark" type="submit">
+              <button className="button button-icon contact-button-dark" disabled={isSubmitting} type="submit">
                 <Send size={16} />
-                Send Message
+                {isSubmitting ? "Sending..." : "Send Message"}
               </button>
             </form>
 

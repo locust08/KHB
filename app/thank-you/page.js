@@ -70,6 +70,21 @@ function ThankYouContent() {
       .filter(Boolean)
       .join(" | ");
   }, [lead]);
+  const isContactLead = lead?.formName === "contact";
+
+  useEffect(() => {
+    if (!lead?.whatsappUrl || error) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      window.location.assign(lead.whatsappUrl);
+    }, 1600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [error, lead?.whatsappUrl]);
 
   if (isLoading) {
     return (
@@ -102,6 +117,7 @@ function ThankYouContent() {
 
   const deliveryAddressLabel =
     lead.deliveryMethod === "pickup" ? "Pickup order" : lead.addressLine || "Not provided";
+  const inquiryLabel = lead.selectedService || lead.enquiryCategory || "General Enquiry";
 
   return (
     <section className="thank-you-wrap" data-nav-theme="light">
@@ -111,134 +127,233 @@ function ThankYouContent() {
           <div className="success-icon">
             <CheckCircle2 size={40} />
           </div>
-          <h1>Thank You for Your Order!</h1>
+          <h1>{isContactLead ? "Thank You for Reaching Out!" : "Thank You for Your Order!"}</h1>
           <p>
-            Your order has been successfully saved. We&apos;re excited to prepare your delicious
-            Peach Strudel.
+            {isContactLead
+              ? "Your message has been saved. We&apos;ll review it and continue the conversation on WhatsApp."
+              : "Your order has been successfully saved. We&apos;re excited to prepare your delicious Peach Strudel."}
           </p>
+          {lead.whatsappUrl ? (
+            <p className="thank-you-redirect-note">
+              {isContactLead
+                ? "Redirecting you to WhatsApp to continue the conversation."
+                : "Redirecting you to WhatsApp to complete confirmation."}
+            </p>
+          ) : null}
 
           <div className="thank-you-summary">
-            <section className="thank-you-group thank-you-group-summary">
-              <div className="thank-you-group-head">
-                <span className="thank-you-group-kicker">Summary</span>
-              </div>
-              <div className="thank-you-group-body">
-                <div className="thank-you-meta">
-                  <strong>Order Number</strong>
-                  <span>{lead.orderNumber}</span>
-                </div>
-                <div className="thank-you-meta is-total">
-                  <strong>Total</strong>
-                  <span className="thank-you-total">
-                    {formatCurrency(lead.total)}
-                  </span>
-                </div>
-                <div className="thank-you-meta">
-                  <strong>Quantity</strong>
-                  <span>
-                    {lead.items.reduce((count, item) => count + item.quantity, 0)}
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            <section className="thank-you-group">
-              <div className="thank-you-group-head">
-                <span className="thank-you-group-kicker">Order Details</span>
-              </div>
-              <div className="thank-you-group-body">
-                <div className="thank-you-meta">
-                  <strong>Selected Items</strong>
-                  <span>
-                    {lead.items.map((item) => `${item.sizeLabel} x${item.quantity}`).join(", ")}
-                  </span>
-                </div>
-                <div className="thank-you-meta">
-                  <strong>Candles</strong>
-                  <span>
-                    {lead.includeCandles ? `${lead.candleQuantity} included` : "No candles"}
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            <section className="thank-you-group thank-you-group-fulfilment">
-              <div className="thank-you-group-head">
-                <span className="thank-you-group-kicker">Fulfilment Details</span>
-              </div>
-              <div className="thank-you-group-body">
-                <div className="thank-you-meta">
-                  <strong>Delivery/Pickup Timing</strong>
-                  <span>{deliveryTiming}</span>
-                </div>
-                <div className="thank-you-meta">
-                  <strong>Delivery Address</strong>
-                  <span>{deliveryAddressLabel}</span>
-                </div>
-                {lead.deliveryMethod === "pickup" && lead.pickupStoreName ? (
-                  <div className="thank-you-meta">
-                    <strong>Pickup Store</strong>
-                    <span>{lead.pickupStoreName}</span>
+            {isContactLead ? (
+              <>
+                <section className="thank-you-group thank-you-group-summary">
+                  <div className="thank-you-group-head">
+                    <span className="thank-you-group-kicker">Summary</span>
                   </div>
-                ) : null}
-              </div>
-            </section>
+                  <div className="thank-you-group-body">
+                    <div className="thank-you-meta">
+                      <strong>Reference Number</strong>
+                      <span>{lead.orderNumber}</span>
+                    </div>
+                    <div className="thank-you-meta">
+                      <strong>Name</strong>
+                      <span>{lead.customerName}</span>
+                    </div>
+                    <div className="thank-you-meta">
+                      <strong>Inquiry Type</strong>
+                      <span>{inquiryLabel}</span>
+                    </div>
+                  </div>
+                </section>
 
-            <section className="thank-you-group thank-you-group-contact">
-              <div className="thank-you-group-head">
-                <span className="thank-you-group-kicker">Payment & Contact</span>
-              </div>
-              <div className="thank-you-group-body">
-                <div className="thank-you-meta">
-                  <strong>Payment Method</strong>
-                  <span>{lead.paymentLabel}</span>
-                </div>
-                <div className="thank-you-meta">
-                  <strong>Special Instructions</strong>
-                  <span>{lead.specialInstructions || "None"}</span>
-                </div>
-                <div className="thank-you-meta">
-                  <strong>Confirmation Sent To</strong>
-                  <CopyableContact
-                    className="thank-you-meta-copy"
-                    href={`mailto:${lead.email}`}
-                    value={lead.email}
-                  />
-                </div>
-              </div>
-            </section>
+                <section className="thank-you-group">
+                  <div className="thank-you-group-head">
+                    <span className="thank-you-group-kicker">Your Message</span>
+                  </div>
+                  <div className="thank-you-group-body">
+                    <div className="thank-you-meta">
+                      <strong>Message</strong>
+                      <span>{lead.specialInstructions || "None"}</span>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="thank-you-group thank-you-group-contact">
+                  <div className="thank-you-group-head">
+                    <span className="thank-you-group-kicker">Contact Details</span>
+                  </div>
+                  <div className="thank-you-group-body">
+                    <div className="thank-you-meta">
+                      <strong>Email</strong>
+                      <CopyableContact
+                        className="thank-you-meta-copy"
+                        href={`mailto:${lead.email}`}
+                        value={lead.email}
+                      />
+                    </div>
+                    <div className="thank-you-meta">
+                      <strong>Phone</strong>
+                      <CopyableContact
+                        className="thank-you-meta-copy"
+                        href={`tel:${lead.phone.replace(/\s+/g, "")}`}
+                        value={lead.phone}
+                      />
+                    </div>
+                  </div>
+                </section>
+              </>
+            ) : (
+              <>
+                <section className="thank-you-group thank-you-group-summary">
+                  <div className="thank-you-group-head">
+                    <span className="thank-you-group-kicker">Summary</span>
+                  </div>
+                  <div className="thank-you-group-body">
+                    <div className="thank-you-meta">
+                      <strong>Order Number</strong>
+                      <span>{lead.orderNumber}</span>
+                    </div>
+                    <div className="thank-you-meta is-total">
+                      <strong>Total</strong>
+                      <span className="thank-you-total">
+                        {formatCurrency(lead.total)}
+                      </span>
+                    </div>
+                    <div className="thank-you-meta">
+                      <strong>Quantity</strong>
+                      <span>
+                        {lead.items.reduce((count, item) => count + item.quantity, 0)}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="thank-you-group">
+                  <div className="thank-you-group-head">
+                    <span className="thank-you-group-kicker">Order Details</span>
+                  </div>
+                  <div className="thank-you-group-body">
+                    <div className="thank-you-meta">
+                      <strong>Selected Items</strong>
+                      <span>
+                        {lead.items.map((item) => `${item.sizeLabel} x${item.quantity}`).join(", ")}
+                      </span>
+                    </div>
+                    <div className="thank-you-meta">
+                      <strong>Candles</strong>
+                      <span>
+                        {lead.includeCandles ? `${lead.candleQuantity} included` : "No candles"}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="thank-you-group thank-you-group-fulfilment">
+                  <div className="thank-you-group-head">
+                    <span className="thank-you-group-kicker">Fulfilment Details</span>
+                  </div>
+                  <div className="thank-you-group-body">
+                    <div className="thank-you-meta">
+                      <strong>Delivery/Pickup Timing</strong>
+                      <span>{deliveryTiming}</span>
+                    </div>
+                    <div className="thank-you-meta">
+                      <strong>Delivery Address</strong>
+                      <span>{deliveryAddressLabel}</span>
+                    </div>
+                    {lead.deliveryMethod === "pickup" && lead.pickupStoreName ? (
+                      <div className="thank-you-meta">
+                        <strong>Pickup Store</strong>
+                        <span>{lead.pickupStoreName}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+
+                <section className="thank-you-group thank-you-group-contact">
+                  <div className="thank-you-group-head">
+                    <span className="thank-you-group-kicker">Payment & Contact</span>
+                  </div>
+                  <div className="thank-you-group-body">
+                    <div className="thank-you-meta">
+                      <strong>Payment Method</strong>
+                      <span>{lead.paymentLabel}</span>
+                    </div>
+                    <div className="thank-you-meta">
+                      <strong>Special Instructions</strong>
+                      <span>{lead.specialInstructions || "None"}</span>
+                    </div>
+                    <div className="thank-you-meta">
+                      <strong>Confirmation Sent To</strong>
+                      <CopyableContact
+                        className="thank-you-meta-copy"
+                        href={`mailto:${lead.email}`}
+                        value={lead.email}
+                      />
+                    </div>
+                  </div>
+                </section>
+              </>
+            )}
           </div>
 
           <div className="thank-you-panel">
-            <h3>What happens next?</h3>
-            <ul className="thank-you-steps">
-              <li>
-                <div className="thank-you-step-copy">
-                  <strong>Lead Stored</strong>
-                  <span>Your request has been saved to our order pipeline and admin systems.</span>
-                </div>
-              </li>
-              <li>
-                <div className="thank-you-step-copy">
-                  <strong>Preparation</strong>
-                  <span>Our bakers will carefully prepare your Peach Strudel.</span>
-                </div>
-              </li>
-              <li>
-                <div className="thank-you-step-copy">
-                  <strong>Delivery/Pickup</strong>
-                  <span>
-                    Your order will be ready for {lead.deliveryMethod === "delivery" ? "delivery" : "pickup"} on the scheduled date.
-                  </span>
-                </div>
-              </li>
-              <li>
-                <div className="thank-you-step-copy">
-                  <strong>Enjoy</strong>
-                  <span>Serve chilled and savor every delicious bite.</span>
-                </div>
-              </li>
-            </ul>
+            <h3>{isContactLead ? "What happens next?" : "What happens next?"}</h3>
+            {isContactLead ? (
+              <ul className="thank-you-steps">
+                <li>
+                  <div className="thank-you-step-copy">
+                    <strong>Message Stored</strong>
+                    <span>Your enquiry has been saved to our support pipeline.</span>
+                  </div>
+                </li>
+                <li>
+                  <div className="thank-you-step-copy">
+                    <strong>Review</strong>
+                    <span>We&apos;ll review your message and prepare the fastest reply.</span>
+                  </div>
+                </li>
+                <li>
+                  <div className="thank-you-step-copy">
+                    <strong>WhatsApp Follow-Up</strong>
+                    <span>We&apos;ll continue the conversation on WhatsApp in the next step.</span>
+                  </div>
+                </li>
+                <li>
+                  <div className="thank-you-step-copy">
+                    <strong>Resolved</strong>
+                    <span>Once we&apos;ve answered your question, you can continue with your order.</span>
+                  </div>
+                </li>
+              </ul>
+            ) : (
+              <ul className="thank-you-steps">
+                <li>
+                  <div className="thank-you-step-copy">
+                    <strong>Lead Stored</strong>
+                    <span>Your request has been saved to our order pipeline and admin systems.</span>
+                  </div>
+                </li>
+                <li>
+                  <div className="thank-you-step-copy">
+                    <strong>Preparation</strong>
+                    <span>Our bakers will carefully prepare your Peach Strudel.</span>
+                  </div>
+                </li>
+                <li>
+                  <div className="thank-you-step-copy">
+                    <strong>Delivery/Pickup</strong>
+                    <span>
+                      Your order will be ready for {lead.deliveryMethod === "delivery" ? "delivery" : "pickup"} on the scheduled date.
+                    </span>
+                  </div>
+                </li>
+                <li>
+                  <div className="thank-you-step-copy">
+                    <strong>Enjoy</strong>
+                    <span>Serve chilled and savor every delicious bite.</span>
+                  </div>
+                </li>
+              </ul>
+            )}
           </div>
 
           <div className="thank-you-actions">
@@ -253,7 +368,7 @@ function ThankYouContent() {
                 target="_blank"
               >
                 <MessageCircle size={16} />
-                Confirm on WhatsApp
+                Continue on WhatsApp
               </a>
             ) : (
               <Link className="button button-outline" href="/contact">

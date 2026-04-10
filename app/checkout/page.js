@@ -11,7 +11,39 @@ import {
   stores
 } from "../components/site/data";
 import { useCart } from "../components/site/CartProvider";
-import { getAttributionSnapshot } from "@/src/lib/tracking/attribution";
+import {
+  buildAttributionPayload,
+  hasFiredSuccessEvent,
+  markSuccessEventFired
+} from "@/src/lib/tracking/attribution";
+import { trackLeadSuccess } from "@/src/lib/tracking/public-tracking";
+
+function serializeTrackingState(trackingState) {
+  if (!trackingState) {
+    return null;
+  }
+
+  return {
+    sessionId: trackingState.sessionId ?? trackingState.trackingSessionId ?? "",
+    landingPage: trackingState.landingPage ?? trackingState.landingPageUrl ?? "",
+    lastPage: trackingState.lastPage ?? trackingState.pagePath ?? "",
+    referrer: trackingState.referrer ?? "",
+    utmSource: trackingState.utmSource ?? "",
+    utmMedium: trackingState.utmMedium ?? "",
+    utmCampaign: trackingState.utmCampaign ?? "",
+    utmTerm: trackingState.utmTerm ?? "",
+    utmContent: trackingState.utmContent ?? "",
+    gclid: trackingState.gclid ?? "",
+    fbclid: trackingState.fbclid ?? "",
+    msclkid: trackingState.msclkid ?? "",
+    ttclid: trackingState.ttclid ?? "",
+    clickId: trackingState.clickId ?? "",
+    gbraid: trackingState.gbraid ?? "",
+    wbraid: trackingState.wbraid ?? "",
+    firstCapturedAt: trackingState.firstCapturedAt ?? "",
+    lastCapturedAt: trackingState.lastCapturedAt ?? ""
+  };
+}
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -108,6 +140,7 @@ function CheckoutContent() {
 
     setIsSubmitting(true);
     setNote("");
+    const trackingState = buildAttributionPayload();
 
     try {
       const response = await fetch("/api/leads", {
@@ -161,9 +194,29 @@ function CheckoutContent() {
             total,
             currency: "MYR"
           },
-          attribution: getAttributionSnapshot(),
+          trackingSessionId: trackingState?.trackingSessionId ?? trackingState?.sessionId ?? "",
+          landingPageUrl: trackingState?.landingPageUrl ?? trackingState?.landingPage ?? "",
+          landingPagePath: trackingState?.landingPagePath ?? "",
+          pageUrl: trackingState?.pageUrl ?? "",
+          pagePath: trackingState?.pagePath ?? trackingState?.lastPage ?? "",
+          pageHistory: trackingState?.pageHistory ?? [],
+          referrer: trackingState?.referrer ?? "",
+          userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "",
+          utmSource: trackingState?.utmSource ?? "",
+          utmMedium: trackingState?.utmMedium ?? "",
+          utmCampaign: trackingState?.utmCampaign ?? "",
+          utmContent: trackingState?.utmContent ?? "",
+          utmTerm: trackingState?.utmTerm ?? "",
+          gclid: trackingState?.gclid ?? "",
+          fbclid: trackingState?.fbclid ?? "",
+          msclkid: trackingState?.msclkid ?? "",
+          ttclid: trackingState?.ttclid ?? "",
+          clickId: trackingState?.clickId ?? "",
+          attribution: serializeTrackingState(trackingState),
           context: {
-            pageUrl: typeof window !== "undefined" ? window.location.href : ""
+            pageUrl: typeof window !== "undefined" ? window.location.href : "",
+            userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "",
+            referrer: typeof document !== "undefined" ? document.referrer : ""
           }
         })
       });
@@ -174,8 +227,41 @@ function CheckoutContent() {
         throw new Error(result?.error || "We could not save your order right now.");
       }
 
+      if (result?.leadSaved) {
+        const leadSuccessKey = `${result.leadId}:${result.orderNumber}`;
+        if (!hasFiredSuccessEvent(leadSuccessKey)) {
+          trackLeadSuccess({
+            leadId: result.leadId,
+            orderNumber: result.orderNumber,
+            value: total,
+            currency: "MYR",
+            deliveryMethod,
+            itemCount: totalQuantity,
+            formName: "checkout",
+            trackingSessionId: trackingState?.trackingSessionId ?? trackingState?.sessionId ?? "",
+            landingPagePath: trackingState?.landingPagePath ?? "",
+            pagePath: trackingState?.pagePath ?? trackingState?.lastPage ?? "",
+            utmSource: trackingState?.utmSource ?? "",
+            utmMedium: trackingState?.utmMedium ?? "",
+            utmCampaign: trackingState?.utmCampaign ?? "",
+            utmContent: trackingState?.utmContent ?? "",
+            utmTerm: trackingState?.utmTerm ?? "",
+            clickId: trackingState?.clickId ?? ""
+          });
+          markSuccessEventFired(leadSuccessKey);
+        }
+      }
+
       if (isCartCheckout) {
         removeItems(selectedCartIds);
+      }
+
+      const nextUrl = result.whatsappUrl || result.confirmationUrl;
+
+      if (nextUrl) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        window.location.assign(nextUrl);
+        return;
       }
 
       router.push(result.confirmationUrl);

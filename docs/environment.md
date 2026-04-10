@@ -31,6 +31,7 @@ Server-only values never reach client code and should only be read from server c
 
 - `SITE_URL`
 - `SUPABASE_URL`
+- `SUPABASE_API_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_ANON_KEY`
 - `GOOGLE_SHEETS_APPS_SCRIPT_URL`
@@ -49,7 +50,8 @@ Server-only values never reach client code and should only be read from server c
 
 - `GOOGLE_SHEETS_APPS_SCRIPT_URL` is the preferred name for the Apps Script endpoint.
 - `GOOGLE_SHEETS_WEBHOOK_URL` is supported as a backward-compatible alias.
-- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` support browser-side Supabase access if needed later.
+- `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_URL`, and `SUPABASE_API_URL` are accepted aliases for the Supabase project URL.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_ANON_KEY` support browser-side Supabase access if needed later.
 - `SITE_URL` is the server-side canonical URL; `NEXT_PUBLIC_SITE_URL` is the browser-safe alias.
 - `NEXT_PUBLIC_GTM_ID` is the browser-safe GTM container ID; `PUBLIC_GTM_CONTAINER_ID` and `GTM_CONTAINER_ID` are supported aliases.
 - `RESEND_FROM_EMAIL_DEV` and `RESEND_TO_EMAIL_DEV` are useful for non-production testing.

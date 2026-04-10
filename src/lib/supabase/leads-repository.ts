@@ -2,18 +2,53 @@ import "server-only";
 
 import { LEAD_PROJECT_CONFIG } from "@/src/lib/backend/project-config";
 import { getSupabaseAdminClient } from "@/src/lib/supabase/server-client";
-import type { DeliveryMethod, PaymentMethod, SyncStatus } from "@/src/types/lead";
+import type { SyncStatus } from "@/src/types/lead";
 
 export interface LeadRow {
+  id: string;
   lead_id: string;
   confirmation_token: string;
   order_number: string;
+  name: string;
+  phone: string;
+  email: string;
+  message: string;
+  form_name: string;
+  enquiry_category: string;
+  selected_service: string;
+  selected_product_ids: string[];
+  selected_product_names: string[];
+  utm_source: string;
+  utm_medium: string;
+  utm_campaign: string;
+  utm_content: string;
+  utm_term: string;
+  gclid: string;
+  fbclid: string;
+  msclkid: string;
+  ttclid: string;
+  click_id: string;
+  tracking_session_id: string;
+  landing_page_url: string;
+  landing_page_path: string;
+  page_url: string;
+  page_path: string;
+  page_history: Array<{
+    pageUrl: string;
+    pagePath: string;
+    timestamp: string;
+  }>;
+  referrer: string;
+  user_agent: string;
+  sheet_synced: boolean;
+  email_sent: boolean;
+  whatsapp_redirected: boolean;
   customer_name: string;
   customer_first_name: string;
   customer_last_name: string;
   customer_email: string;
   customer_phone: string;
-  delivery_method: DeliveryMethod;
+  delivery_method: string;
   delivery_date: string;
   delivery_time: string;
   delivery_address: string;
@@ -22,7 +57,7 @@ export interface LeadRow {
   delivery_state: string;
   pickup_store_id: string;
   pickup_store_name: string;
-  payment_method: PaymentMethod;
+  payment_method: string;
   payment_label: string;
   include_candles: boolean;
   candle_quantity: number;
@@ -44,7 +79,7 @@ export interface LeadRow {
   created_at: string;
 }
 
-type LeadRowInsert = Omit<LeadRow, "created_at">;
+type LeadRowInsert = Omit<LeadRow, "id" | "created_at">;
 
 export async function insertLead(row: LeadRowInsert) {
   const supabase = getSupabaseAdminClient();
@@ -66,6 +101,9 @@ export async function updateLeadSyncState(
   patch: Partial<
     Pick<
       LeadRow,
+      | "sheet_synced"
+      | "email_sent"
+      | "whatsapp_redirected"
       | "sheet_sync_status"
       | "sheet_sync_message"
       | "admin_email_status"
@@ -93,6 +131,7 @@ export async function getLeadConfirmationByToken(token: string) {
       [
         "lead_id",
         "order_number",
+        "form_name",
         "customer_name",
         "customer_email",
         "customer_phone",
@@ -109,6 +148,15 @@ export async function getLeadConfirmationByToken(token: string) {
         "include_candles",
         "candle_quantity",
         "special_instructions",
+        "tracking_session_id",
+        "landing_page_path",
+        "page_path",
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_content",
+        "utm_term",
+        "click_id",
         "total",
         "currency",
         "items",

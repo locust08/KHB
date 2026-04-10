@@ -7,7 +7,8 @@ import { LEAD_PROJECT_CONFIG } from "@/src/lib/backend/project-config";
 const serverEnvSchema = z.object({
   SITE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
-  SUPABASE_URL: z.string().url(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_API_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
@@ -29,11 +30,31 @@ const serverEnvSchema = z.object({
   GA4_STREAM_ID: z.string().min(1).optional()
 });
 
-let cachedServerEnv: z.infer<typeof serverEnvSchema> | null = null;
+type ParsedServerEnv = z.infer<typeof serverEnvSchema> & {
+  SUPABASE_URL: string;
+};
+
+let cachedServerEnv: ParsedServerEnv | null = null;
 
 export function getServerEnv() {
   if (!cachedServerEnv) {
-    cachedServerEnv = serverEnvSchema.parse(process.env);
+    const parsed = serverEnvSchema.parse(process.env);
+    const supabaseUrl =
+      parsed.SUPABASE_URL ??
+      parsed.SUPABASE_API_URL ??
+      parsed.NEXT_PUBLIC_SUPABASE_URL ??
+      "";
+
+    if (!supabaseUrl) {
+      throw new Error(
+        "Supabase URL is missing. Set SUPABASE_URL, SUPABASE_API_URL, or NEXT_PUBLIC_SUPABASE_URL."
+      );
+    }
+
+    cachedServerEnv = {
+      ...parsed,
+      SUPABASE_URL: supabaseUrl
+    };
   }
 
   return cachedServerEnv;
@@ -64,7 +85,11 @@ export function getPublicSiteUrl() {
 
 export function getPublicSupabaseConfig() {
   return {
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "",
+    supabaseUrl:
+      process.env.NEXT_PUBLIC_SUPABASE_URL ??
+      process.env.SUPABASE_URL ??
+      process.env.SUPABASE_API_URL ??
+      "",
     supabasePublishableKey:
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
       process.env.SUPABASE_ANON_KEY ??
